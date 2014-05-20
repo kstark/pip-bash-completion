@@ -1,12 +1,24 @@
-
+export _PIP_COMPLETION_MD5=
+export _PIP_COMPLETION_COMMANDS=
+export _PIP_COMPLETION_OPTS=
 _pip() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    commands=$(pip --help | awk '/Commands\:/,/General Options\:/' | \
-               \grep -E -o "^\s{2}\w*" | tr -d ' ')
-    opts=$(pip --help | \grep -E -o "((-\w{1}|--(\w|-)*=?)){1,2}")
+    pip_md5=$(md5 -q $(which pip))
+    if [[ "${pip_md5}" = "${_PIP_COMPLETION_MD5}" ]]; then
+        commands="${_PIP_COMPLETION_COMMANDS}"
+        opts="${_PIP_COMPLETION_OPTS}"
+    else
+        pip_help=$(pip --help)
+        commands=$(echo "${pip_help}" | awk '/Commands\:/,/General Options\:/' | \
+                   \grep -E -o "^\s{2}\w*" | tr -d ' ')
+        opts=$(echo "${pip_help}" | \grep -E -o "((-\w{1}|--(\w|-)*=?)){1,2}")
+    fi
 
+    export _PIP_COMPLETION_MD5="${pip_md5}"
+    export _PIP_COMPLETION_COMMANDS="${commands}"
+    export _PIP_COMPLETION_OPTS="${opts}"
 
     if [ $COMP_CWORD == 1 ] ; then
         COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
